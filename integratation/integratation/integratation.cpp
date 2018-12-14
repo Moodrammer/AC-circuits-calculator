@@ -94,5 +94,12 @@ int main()
 		}
 	}
 	cout << z << endl;
+	
+	//calculate the unknown matrix
+	MatrixXd x = MatrixXd::Zero(n + m, 1);
+	x = A.inverse() * z;
+	cout << x << endl;
+
+	return 0;
 }
 
