@@ -21,17 +21,18 @@ int main()
 	//in volatage case, increment m counter (the number of volatage sources);
 
 
-	int n = 3 , m = 1;
+	int n = 2 , m = 1;
+	int numOfComponents = 3;
 	MatrixXd A(n , n); 
 	//(row i ,column j)
-	for (int i = 0; i < n; i++) {
+	for (int i = 0; i < n; i++) { //n = index + 1
 		
 		A(i, i) = 0;
 
-		for (int k = 0; k < n; k++) {
+		for (int k = 0; k < numOfComponents; k++) { //search in the data
 			if (typeArr[k] == 'R') {
-				if (firstNodeArr[k] == i || secondNodeArr[k] == i) {
-					A(i, i) += 1 / valueArr[k];
+				if (firstNodeArr[k] == i+1 || secondNodeArr[k] == i+1) { //i+1 because we don't consider 0 node
+					A(i, i) += 1 / valueArr[k];  //diagonal
 				}
 			}
 		}
@@ -39,9 +40,9 @@ int main()
 		for (int j = i + 1; j < n;j++) {
 			A(i, j) = 0;
 			A(j, i) = 0;	//assigning 0 to an coeffcient which has a garbage does not change the value(garbage).
-			for (int k = 0; k < n; k++) {
+			for (int k = 0; k < numOfComponents; k++) {
 				if (typeArr[k] == 'R') {
-				if ((firstNodeArr[k] == i && secondNodeArr[k] == j) || (firstNodeArr[k] == j && secondNodeArr[k] == i)) {
+				if ((firstNodeArr[k] == i+1 && secondNodeArr[k] == j+1) || (firstNodeArr[k] == j+1 && secondNodeArr[k] == i+1)) {
 					A(i, j) -= 1 / valueArr[k];
 					A(j, i) = A(i, j);
 				}
