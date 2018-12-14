@@ -10,14 +10,14 @@ int main()
 	G(NxN) C(N x M) 
 	C(MxN) D(NxN)
 	*/
-	char typeArr[3] = { 'V' , 'R' , 'R' };
-	float firstNodeArr[3] = { 1 , 1 , 2 };
-	float secondNodeArr[3] = { 0 , 2 , 0 };
-	float valueArr[3]{ 5 , 1, 6 };
+	char typeArr[4] = { 'V' , 'V' , 'R' , 'R' };
+	float firstNodeArr[4] = { 1 ,1, 1 , 2 };
+	float secondNodeArr[4] = { 0 ,2, 2 , 0 };
+	float valueArr[4]{ 5 , 6 ,1, 6 };
 	
 	//N x N
-	int n = 2, m = 1;
-	int numOfComponents = 3;
+	int n = 2, m = 2;
+	int numOfComponents = 4;
 	MatrixXd G(n, n);
 	//(row i ,column j)
 	for (int i = 0; i < n; i++) { //n = index + 1
@@ -82,5 +82,17 @@ int main()
 	A.block(n, 0, m, n) = C;
 	A.block(n, n, m, m) = D;
 	cout << A << endl;
+
+	//z matrix (n + m) x 1
+	MatrixXd z = MatrixXd::Zero(n + m, 1);
+
+	int rowCounter = n;
+	for (int k = 0; k < numOfComponents; k++) { //reads the next voltage source
+		if (typeArr[k] == 'V') {
+			z(rowCounter, 0) = valueArr[k];
+			rowCounter++;
+		}
+	}
+	cout << z << endl;
 }
 
