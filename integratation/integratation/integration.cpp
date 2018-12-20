@@ -5,20 +5,23 @@
 using Eigen::MatrixXcf;
 using namespace std;
 
+
 int main()
 {
 	//integeration matrix :
-	cout <<"G(NxN) C(N x M)"<<endl; 
-	cout << "C(MxN) D(NxN)"<<endl;
-	
-	float W = 4; //omega
+	cout << "G(NxN) C(N x M)" << endl;
+	cout << "C(MxN) D(NxN)" << endl;
+
+	const double pi = 3.14159;
+	float W = 1; //omega
+	const int n = 3, m = 2;  ///we don't count node 0
 	const int numOfComponents = 5;
-	char typeArr[numOfComponents] = { 'V' ,'R', 'C','R','L' };
-	float firstNodeArr[numOfComponents] = { 1 , 1 , 2 , 1 ,3 };
-	float secondNodeArr[numOfComponents] = { 0 , 2 , 0 , 3 ,0 };
-	float valueArr[numOfComponents]{ 50 ,4 , 1 / 12.0 , 8 ,3 };
+	char typeArr[numOfComponents] = { 'V' ,'R', 'L','C' ,'V'};
+	float firstNodeArr[numOfComponents] = { 1 , 1 , 2 ,2 ,3};
+	float secondNodeArr[numOfComponents] = { 0 , 2 , 3  ,0 ,0};
+	float valueArr[numOfComponents] = { 10 ,3 , 1  ,1 ,5};
+	float PhaseArr[numOfComponents] = { -45 ,-60};
 	//N x N
-	int n = 3, m = 1;  ///we don't count node 0
 	//float W = 4000; //omega
 	//const int numOfComponents = 4;
 	//char typeArr[numOfComponents] = { 'V' ,'C', 'R' ,'L'};
@@ -27,6 +30,8 @@ int main()
 	//float valueArr[numOfComponents]{ 10 ,0.1 * pow(10,-6), 5 * pow (10,3) ,1};
 	////N x N
 	//int n = 3, m = 1;
+	float one = 1;
+
 	MatrixXcf G(n, n);
 	//(row i ,column j)
 	for (int i = 0; i < n; i++) { //n = index + 1
@@ -39,14 +44,14 @@ int main()
 					G(i, i) += 1 / valueArr[k];  //diagonal
 				}
 			}
-			else if (typeArr[k] == 'C') {
-				if (firstNodeArr[k] == i + 1 || secondNodeArr[k] == i + 1) { //i+1 because we don't consider 0 node
-					G(i, i) += complex<float>(0 , W * valueArr[k]);  //diagonal
-				}
-			}
 			else if (typeArr[k] == 'L') {
 				if (firstNodeArr[k] == i + 1 || secondNodeArr[k] == i + 1) { //i+1 because we don't consider 0 node
-					G(i, i) += complex<float>(0, -1 / (W * valueArr[k]));  //diagonal
+					G(i, i) +=  complex<float>(0, -1/(W * valueArr[k]));  //diagonal
+				}
+			}
+			else if (typeArr[k] == 'C') {
+				if (firstNodeArr[k] == i + 1 || secondNodeArr[k] == i + 1) { //i+1 because we don't consider 0 node
+					G(i, i) += complex<float>(0, (W * valueArr[k]));  //diagonal
 				}
 			}
 		}
@@ -61,22 +66,22 @@ int main()
 						G(j, i) = G(i, j);
 					}
 				}
-				else if (typeArr[k] == 'C') {
+				else if (typeArr[k] == 'L') {
 					if ((firstNodeArr[k] == i + 1 && secondNodeArr[k] == j + 1) || (firstNodeArr[k] == j + 1 && secondNodeArr[k] == i + 1)) {
-						G(i, j) -= complex<float>(0, W * valueArr[k]);
+						G(i, j) -= complex<float>(0, -1 / (W * valueArr[k]));
 						G(j, i) = G(i, j);
 					}
 				}
-				else if (typeArr[k] == 'L') {
+				else if (typeArr[k] == 'C') {
 					if ((firstNodeArr[k] == i + 1 && secondNodeArr[k] == j + 1) || (firstNodeArr[k] == j + 1 && secondNodeArr[k] == i + 1)) {
-						G(i, i) += complex<float>(0, -1 / (W * valueArr[k]));  //diagonal
+						G(i, j) -= one / complex<float>(0, (W * valueArr[k]));
 						G(j, i) = G(i, j);
 					}
 				}
 			}
 		}
 	}
-	cout << "G "<<G << endl;
+	cout << "G " << G << endl;
 
 	//N x M , M x N
 	MatrixXcf B = MatrixXcf::Zero(n, m); //initialize all coefficient to 0
@@ -100,32 +105,34 @@ int main()
 			}
 		}
 	}
-	cout << "B "<< B << endl;
-	cout <<"C "<< C << endl;
+	cout << "B " << B << endl;
+	cout << "C " << C << endl;
 
 	//mxm	
 	MatrixXcf D = MatrixXcf::Zero(m, m);
-	
+
 	//Block Operation	//integration matrix (N+M) x (N+M)
-	MatrixXcf A(m+n, m+n);
+	MatrixXcf A(m + n, m + n);
 	A.block(0, 0, n, n) = G;
 	A.block(0, n, n, m) = B;
 	A.block(n, 0, m, n) = C;
 	A.block(n, n, m, m) = D;
-	cout << "A " <<A << endl;
+	cout << "A " << A << endl;
 
 	//z matrix (n + m) x 1
 	MatrixXcf z = MatrixXcf::Zero(n + m, 1);
 
 	int rowCounter = n;
+	int phaseCounter = 0;
 	for (int k = 0; k < numOfComponents; k++) { //reads the next voltage source
 		if (typeArr[k] == 'V') {
-			z(rowCounter, 0) = valueArr[k];
+			z(rowCounter, 0) = complex<float>(valueArr[k] * cos((PhaseArr[phaseCounter] * pi) / 180), valueArr[k] * sinf((PhaseArr[phaseCounter] * pi) / 180));
 			rowCounter++;
+			phaseCounter ++;
 		}
 	}
-	cout << "z "<<z << endl;
-	
+	cout << "z " << z << endl;
+
 	//calculate the unknown matrix
 	MatrixXcf x = MatrixXcf::Zero(n + m, 1);
 	x = A.inverse() * z;
@@ -138,6 +145,7 @@ int main()
 		cout << "V(" << i + 1 << ") " << x(i, 0) << endl;
 	}
 
+
 	//Displaying currents in all branches
 	int VoltagesourceCounter = 0;
 	for (int i = 0; i < numOfComponents; i++)
@@ -147,15 +155,16 @@ int main()
 			if (firstNodeArr[i] != 0 && secondNodeArr[i] != 0)
 			{
 				cout << "I(" << firstNodeArr[i] << "," << secondNodeArr[i] << ") ";
-				complex<float> value(0,0);
+				complex<float> value(0, 0);
 				if (typeArr[i] == 'R')
 					value = valueArr[i];		//real = valueArr[i] and imag  = 0
-				else if(typeArr[i] == 'C')
-					value = complex<float> (0,-1/(W*valueArr[i]));
+				else if (typeArr[i] == 'C')
+					value = complex<float>(0, -1 / (W*valueArr[i]));
 				else if (typeArr[i] == 'L')
 					value = complex<float>(0, W * valueArr[i]);
 
-				cout << ((x(firstNodeArr[i] - 1, 0) - x(secondNodeArr[i] - 1, 0)) / value) <<endl;
+				cout << ((x(firstNodeArr[i] - 1, 0) - x(secondNodeArr[i] - 1, 0)) / value) << endl;
+
 			}
 			else
 			{
@@ -164,13 +173,14 @@ int main()
 					cout << "I(" << firstNodeArr[i] << "," << secondNodeArr[i] << ") ";
 					complex<float> value(0, 0);
 					if (typeArr[i] == 'R')
-						value= valueArr[i];
+						value = valueArr[i];
 					else if (typeArr[i] == 'C')
 						value = complex<float>(0, -1 / (W * valueArr[i]));
 					else if (typeArr[i] == 'L')
 						value = complex<float>(0, W * valueArr[i]);
 
-					cout <<	((complex<float>(0,0) - x(secondNodeArr[i] - 1, 0)) / value) << endl;
+					cout << ((complex<float>(0, 0) - x(secondNodeArr[i] - 1, 0)) / value) << endl;
+
 				}
 				else
 				{
@@ -184,6 +194,7 @@ int main()
 						value = complex<float>(0, W * valueArr[i]);
 
 					cout << ((x(firstNodeArr[i] - 1, 0) - complex<float>(0, 0))) / value << endl;
+
 				}
 			}
 		}
