@@ -2,24 +2,69 @@
 #include <iostream>
 #include <Eigen/Dense>
 #include <complex>
+#include <fstream>
+#include <istream>
+#include <string>
 using Eigen::MatrixXcf;
 using namespace std;
 # define pi           3.14159265358979323846
 
 int main()
 {
+	cout << "please enter the name of your text file . . .";
+	string inputString;
+	cin >> inputString;
+	ifstream myFile(inputString + ".txt"); //opens the file
+
+	char type; int ID; float firstNode, secondNode,  phaseArrElement;
+	string value;
+	char typeArr[100]; int IDArr[100]; float firstNodeArr[100], secondNodeArr[100], valueArr[100], PhaseArr[100];
+	int phaseArrCount = 0;
+	int i = 0; //counter
+	if (myFile.is_open())
+	{
+		while (myFile >> type)			//reads from the file.
+		{
+
+			typeArr[i] = type;
+			myFile >> ID; IDArr[i] = ID;
+
+			myFile >> firstNode; firstNodeArr[i] = firstNode;
+
+			myFile >> secondNode; secondNodeArr[i] = secondNode;
+			
+			string::size_type sz;     // alias of size_t
+			myFile >> value; valueArr[i] = stof(value,&sz);
+
+			if (type == 'V' || type == 'I') {
+				myFile >> phaseArrElement; PhaseArr[phaseArrCount] = phaseArrElement;
+				phaseArrCount++;
+			}
+
+			i++;
+		}
+
+		myFile.close();
+	}
+	else
+	{
+		cout << "Unable to open file";
+	}
+
+
 	//integeration matrix :
 	cout << "G(NxN) C(N x M)" << endl;
 	cout << "C(MxN) D(NxN)" << endl;
 
-	float W = 3; //omega
-	const int n = 1, m = 0;  ///we don't count node 0
-	const int numOfComponents = 3;
-	char typeArr[numOfComponents] = { 'I' ,'R', 'C' };
-	float firstNodeArr[numOfComponents] = { 1 , 1 , 1 };
-	float secondNodeArr[numOfComponents] = { 0 , 0 , 0 };
-	float valueArr[numOfComponents] = { 10 ,4, 1/6.0 };
-	float PhaseArr[numOfComponents] = { 45 };
+	float W = 1; //omega
+	const int n = 5, m = 1;  ///we don't count node 0
+	const int numOfComponents = 8;
+	//char typeArr[numOfComponents] = { 'I' ,'R', 'C' };
+	//float firstNodeArr[numOfComponents] = { 1 , 1 , 1 };
+	//float secondNodeArr[numOfComponents] = { 0 , 0 , 0 };
+	//float valueArr[numOfComponents] = { 10 ,4, 1/6.0 };
+	//float PhaseArr[numOfComponents] = { 45 };
+	//int IDArr[numOfComponents] = { 1,2,6 };
 	//N x N
 	//float W = 4000; //omega
 	//const int numOfComponents = 4;
@@ -29,7 +74,6 @@ int main()
 	//float valueArr[numOfComponents]{ 10 ,0.1 * pow(10,-6), 5 * pow (10,3) ,1};
 	////N x N
 	//int n = 3, m = 1;
-	float one = 1;
 
 	MatrixXcf G(n, n);
 	//(row i ,column j)
@@ -73,7 +117,7 @@ int main()
 				}
 				else if (typeArr[k] == 'C') {
 					if ((firstNodeArr[k] == i + 1 && secondNodeArr[k] == j + 1) || (firstNodeArr[k] == j + 1 && secondNodeArr[k] == i + 1)) {
-						G(i, j) -= one / complex<float>(0, (W * valueArr[k]));
+						G(i, j) -= complex<float>(0, (W * valueArr[k]));
 						G(j, i) = G(i, j);
 					}
 				}
@@ -161,57 +205,70 @@ int main()
 		{
 			if (firstNodeArr[i] != 0 && secondNodeArr[i] != 0)
 			{
-				cout << "I(" << firstNodeArr[i] << "," << secondNodeArr[i] << ") ";
 				complex<float> value(0, 0);
 				if (typeArr[i] == 'R')
+				{
 					value = valueArr[i];		//real = valueArr[i] and imag  = 0
+					cout <<  'R' << IDArr[i] ;
+				}
 				else if (typeArr[i] == 'C')
+				{
 					value = complex<float>(0, -1 / (W*valueArr[i]));
-				else if (typeArr[i] == 'L')
+					cout <<  'C' << IDArr[i];
+				}
+				else if (typeArr[i] == 'L') {
 					value = complex<float>(0, W * valueArr[i]);
-
-				cout << ((x(firstNodeArr[i] - 1, 0) - x(secondNodeArr[i] - 1, 0)) / value) << endl;
+					cout <<  'L' << IDArr[i];
+				}
+				cout << " I(" << firstNodeArr[i] << "," << secondNodeArr[i] << ") " << ((x(firstNodeArr[i] - 1, 0) - x(secondNodeArr[i] - 1, 0)) / value) << endl;
 
 			}
 			else
 			{
 				if (firstNodeArr[i] == 0)
 				{
-					cout << "I(" << firstNodeArr[i] << "," << secondNodeArr[i] << ") ";
 					complex<float> value(0, 0);
 					if (typeArr[i] == 'R')
+					{
 						value = valueArr[i];
+						cout << 'R'<<IDArr[i];
+					}
 					else if (typeArr[i] == 'C')
+					{
 						value = complex<float>(0, -1 / (W * valueArr[i]));
-					else if (typeArr[i] == 'L')
+						cout <<  'C' << IDArr[i];
+					}
+					else if (typeArr[i] == 'L') {
 						value = complex<float>(0, W * valueArr[i]);
-
-					cout << ((complex<float>(0, 0) - x(secondNodeArr[i] - 1, 0)) / value) << endl;
+						cout <<  'L' << IDArr[i];
+					}
+					cout << " I(" << firstNodeArr[i] << "," << secondNodeArr[i] << ") " << ((complex<float>(0, 0) - x(secondNodeArr[i] - 1, 0)) / value) << endl;
 
 				}
 				else
 				{
-					cout << "I(" << firstNodeArr[i] << "," << secondNodeArr[i] << ") ";
 					complex<float> value(0, 0);
-					if (typeArr[i] == 'R')
+					if (typeArr[i] == 'R') {
 						value = valueArr[i];
-					else if (typeArr[i] == 'C')
+						cout <<  'R' << IDArr[i];
+					}
+					else if (typeArr[i] == 'C') {
 						value = complex<float>(0, -1 / (W * valueArr[i]));
-					else if (typeArr[i] == 'L')
+						cout <<  'C' << IDArr[i];
+					}
+					else if (typeArr[i] == 'L') {
 						value = complex<float>(0, W * valueArr[i]);
-
-					cout << ((x(firstNodeArr[i] - 1, 0) - complex<float>(0, 0))) / value << endl;
+						cout <<  'L' << IDArr[i];
+					}
+					cout << " I(" << firstNodeArr[i] << "," << secondNodeArr[i] << ") " << ((x(firstNodeArr[i] - 1, 0) - complex<float>(0, 0))) / value << endl;
 
 				}
 			}
 		}
-		else
-		{
-			if (typeArr[i] == 'V') {
-				cout << "I(" << firstNodeArr[i] << "," << secondNodeArr[i] << ") " << x(n + VoltagesourceCounter, 0) << endl;
+		else if (typeArr[i] == 'V') {
+				cout <<  IDArr[i] << " I(" << firstNodeArr[i] << "," << secondNodeArr[i] << ") " << x(n + VoltagesourceCounter, 0) << endl;
 				VoltagesourceCounter++;
 			}
-		}
 	}
 
 	cout << "\n<------------------------------------------------------------------------------------------->\n";
