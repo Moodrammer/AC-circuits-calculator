@@ -4,7 +4,7 @@
 #include <complex>
 using Eigen::MatrixXcf;
 using namespace std;
-
+# define pi           3.14159265358979323846
 
 int main()
 {
@@ -12,15 +12,14 @@ int main()
 	cout << "G(NxN) C(N x M)" << endl;
 	cout << "C(MxN) D(NxN)" << endl;
 
-	const double pi = 3.14159;
-	float W = 1; //omega
-	const int n = 3, m = 2;  ///we don't count node 0
-	const int numOfComponents = 5;
-	char typeArr[numOfComponents] = { 'V' ,'R', 'L','C' ,'V'};
-	float firstNodeArr[numOfComponents] = { 1 , 1 , 2 ,2 ,3};
-	float secondNodeArr[numOfComponents] = { 0 , 2 , 3  ,0 ,0};
-	float valueArr[numOfComponents] = { 10 ,3 , 1  ,1 ,5};
-	float PhaseArr[numOfComponents] = { -45 ,-60};
+	float W = 3; //omega
+	const int n = 1, m = 0;  ///we don't count node 0
+	const int numOfComponents = 3;
+	char typeArr[numOfComponents] = { 'I' ,'R', 'C' };
+	float firstNodeArr[numOfComponents] = { 1 , 1 , 1 };
+	float secondNodeArr[numOfComponents] = { 0 , 0 , 0 };
+	float valueArr[numOfComponents] = { 10 ,4, 1/6.0 };
+	float PhaseArr[numOfComponents] = { 45 };
 	//N x N
 	//float W = 4000; //omega
 	//const int numOfComponents = 4;
@@ -46,7 +45,7 @@ int main()
 			}
 			else if (typeArr[k] == 'L') {
 				if (firstNodeArr[k] == i + 1 || secondNodeArr[k] == i + 1) { //i+1 because we don't consider 0 node
-					G(i, i) +=  complex<float>(0, -1/(W * valueArr[k]));  //diagonal
+					G(i, i) += complex<float>(0, -1 / (W * valueArr[k]));  //diagonal
 				}
 			}
 			else if (typeArr[k] == 'C') {
@@ -122,13 +121,21 @@ int main()
 	//z matrix (n + m) x 1
 	MatrixXcf z = MatrixXcf::Zero(n + m, 1);
 
-	int rowCounter = n;
+	int rowVoltageCounter = n;
 	int phaseCounter = 0;
 	for (int k = 0; k < numOfComponents; k++) { //reads the next voltage source
 		if (typeArr[k] == 'V') {
-			z(rowCounter, 0) = complex<float>(valueArr[k] * cos((PhaseArr[phaseCounter] * pi) / 180), valueArr[k] * sinf((PhaseArr[phaseCounter] * pi) / 180));
-			rowCounter++;
-			phaseCounter ++;
+			z(rowVoltageCounter, 0) = complex<float>(valueArr[k] * cos((PhaseArr[phaseCounter] * pi) / 180), valueArr[k] * sinf((PhaseArr[phaseCounter] * pi) / 180));
+			rowVoltageCounter++;
+			phaseCounter++;
+		}
+		else if (typeArr[k] == 'I') {
+			if (firstNodeArr[k] != 0) 
+				z(firstNodeArr[k] - 1, 0) += complex<float>(valueArr[k] * cos((PhaseArr[phaseCounter] / 180) * pi), valueArr[k] * sinf((PhaseArr[phaseCounter] * pi) / 180));
+			if (secondNodeArr[k] != 0)
+				z(secondNodeArr[k] - 1, 0) += complex<float>(valueArr[k] * cos((PhaseArr[phaseCounter] * pi) / 180), valueArr[k] * sinf((PhaseArr[phaseCounter] * pi) / 180));
+
+			phaseCounter++;
 		}
 	}
 	cout << "z " << z << endl;
@@ -200,8 +207,10 @@ int main()
 		}
 		else
 		{
-			cout << "I(" << firstNodeArr[i] << "," << secondNodeArr[i] << ") " << x(n + VoltagesourceCounter, 0) << endl;
-			VoltagesourceCounter++;
+			if (typeArr[i] == 'V') {
+				cout << "I(" << firstNodeArr[i] << "," << secondNodeArr[i] << ") " << x(n + VoltagesourceCounter, 0) << endl;
+				VoltagesourceCounter++;
+			}
 		}
 	}
 
