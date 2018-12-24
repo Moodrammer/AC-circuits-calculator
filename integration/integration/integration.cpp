@@ -11,6 +11,19 @@ using namespace std;
 
 int main()
 {
+	
+	int action;
+	do {
+		do {
+			cout << "[1] solve an AC circuit" << endl;
+			cout << "[2] exit" << endl;
+			cout << "please select a valid operation..." << endl;
+			cin >> action;
+		} while (!(action == 1 || action == 2));
+
+		if (action == 1) {
+
+
 	cout << "please enter the name of your text file . . .";
 	string inputString;
 	cin >> inputString;
@@ -20,11 +33,14 @@ int main()
 	string value;
 	char typeArr[100]; int IDArr[100]; float firstNodeArr[100], secondNodeArr[100], valueArr[100], PhaseArr[100];
 	int phaseArrCount = 0;
+
+	int numOfComponents = 0;
 	int i = 0; //counter
 	if (myFile.is_open())
 	{
 		while (myFile >> type)			//reads from the file.
 		{
+			numOfComponents++;
 
 			typeArr[i] = type;
 			myFile >> ID; IDArr[i] = ID;
@@ -45,35 +61,25 @@ int main()
 		}
 
 		myFile.close();
-	}
-	else
-	{
-		cout << "Unable to open file";
-	}
-
+	
 
 	//integeration matrix :
-	cout << "G(NxN) C(N x M)" << endl;
-	cout << "C(MxN) D(NxN)" << endl;
+	float W;
+	do {
+		cout << " please enter a valid angular frequency..." << endl;
+		cin >> W;
+	} while (W < 0);
+	//omega
+	
+	int n = 1; //the minimum number of essential nodes
+	int m = 0;
+	for (int k = 1; k < numOfComponents; k++) {
+		if (firstNodeArr[k] > n  ) n = firstNodeArr[k];
+		else if (secondNodeArr[k] > n) n = secondNodeArr[k];
 
-	float W = 1; //omega
-	const int n = 5, m = 1;  ///we don't count node 0
-	const int numOfComponents = 8;
-	//char typeArr[numOfComponents] = { 'I' ,'R', 'C' };
-	//float firstNodeArr[numOfComponents] = { 1 , 1 , 1 };
-	//float secondNodeArr[numOfComponents] = { 0 , 0 , 0 };
-	//float valueArr[numOfComponents] = { 10 ,4, 1/6.0 };
-	//float PhaseArr[numOfComponents] = { 45 };
-	//int IDArr[numOfComponents] = { 1,2,6 };
-	//N x N
-	//float W = 4000; //omega
-	//const int numOfComponents = 4;
-	//char typeArr[numOfComponents] = { 'V' ,'C', 'R' ,'L'};
-	//float firstNodeArr[numOfComponents] = { 1 ,3,2 ,3};
-	//float secondNodeArr[numOfComponents] = { 0 ,2,1 ,0};
-	//float valueArr[numOfComponents]{ 10 ,0.1 * pow(10,-6), 5 * pow (10,3) ,1};
-	////N x N
-	//int n = 3, m = 1;
+		if (typeArr[k] == 'V')m++;
+	}
+
 
 	MatrixXcf G(n, n);
 	//(row i ,column j)
@@ -124,7 +130,6 @@ int main()
 			}
 		}
 	}
-	cout << "G " << G << endl;
 
 	//N x M , M x N
 	MatrixXcf B = MatrixXcf::Zero(n, m); //initialize all coefficient to 0
@@ -148,8 +153,6 @@ int main()
 			}
 		}
 	}
-	cout << "B " << B << endl;
-	cout << "C " << C << endl;
 
 	//mxm	
 	MatrixXcf D = MatrixXcf::Zero(m, m);
@@ -160,7 +163,6 @@ int main()
 	A.block(0, n, n, m) = B;
 	A.block(n, 0, m, n) = C;
 	A.block(n, n, m, m) = D;
-	cout << "A " << A << endl;
 
 	//z matrix (n + m) x 1
 	MatrixXcf z = MatrixXcf::Zero(n + m, 1);
@@ -182,12 +184,10 @@ int main()
 			phaseCounter++;
 		}
 	}
-	cout << "z " << z << endl;
 
 	//calculate the unknown matrix
 	MatrixXcf x = MatrixXcf::Zero(n + m, 1);
 	x = A.inverse() * z;
-	cout << "x" << x << endl;
 
 	cout << "\n<----------------------------------------OUTPUT--------------------------------------------->\n";
 	//Displaying all node voltages
@@ -272,7 +272,18 @@ int main()
 	}
 
 	cout << "\n<------------------------------------------------------------------------------------------->\n";
+	}
+	else
+	{
+	cout << "Unable to open file" <<endl;
+	}
 
+	//int x1;
+	//cout <<  "please press any key to continue" << endl;
+	//cin >> x1;
+			}
+
+	} while (action != 2);
 	return 0;
 }
 
