@@ -73,7 +73,7 @@ int main()
 	
 	int n = 1; //the minimum number of essential nodes
 	int m = 0;
-	for (int k = 1; k < numOfComponents; k++) {
+	for (int k = 0; k < numOfComponents; k++) {
 		if (firstNodeArr[k] > n  ) n = firstNodeArr[k];
 		else if (secondNodeArr[k] > n) n = secondNodeArr[k];
 
